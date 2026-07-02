@@ -1,0 +1,18 @@
+# Main Site Info
+name: QuackSnap
+title: QuackSnap Photobooth
+description: A custom photobooth app for capturing memories.
+
+# Author Details
+author:
+  name: Quackerr
+
+# Build Settings
+# This tells GitHub to ignore background files so your site loads faster
+exclude:
+  - README.md
+  - .gitignore
+
+# Safety Protocol
+# This ensures GitHub serves your custom HTML exactly as-is without forcing a theme over it
+theme: jekyll-theme-blank
