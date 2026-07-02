@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuackSnap Photobooth</title>
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: #050508; 
+            color: #E4E5E8; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+
+        #main-menu {
+            text-align: center;
+            background: #252630; 
+            padding: 4rem 3rem;
+            border-radius: 12px;
+            border: 1px solid #3a3c4a;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.9);
+            max-width: 400px;
+            width: 100%;
+        }
+        #main-menu h1 {
+            color: #E4E5E8;
+            font-size: 2.5rem;
+            margin: 0 0 0.5rem 0;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+        #main-menu p {
+            color: #9a9ca6;
+            margin-bottom: 2.5rem;
+            font-size: 1.1rem;
+        }
+        .menu-btn {
+            background: #A11D2A; 
+            color: #E4E5E8;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            width: 100%;
+        }
+        .menu-btn:hover {
+            background: #E04F60; 
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(224, 79, 96, 0.4);
+        }
+
+        #photobooth-app {
+            display: none; 
+            background: #252630; 
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid #3a3c4a;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.9);
+            text-align: center;
+            width: 100%;
+            max-width: 550px;
+        }
+        
+        .filter-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .filter-btn {
+            background: #1b1c23;
+            color: #9a9ca6;
+            border: 1px solid #3a3c4a;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .filter-btn:hover, .filter-btn.active {
+            background: #A11D2A; 
+            color: #E4E5E8;
+            border-color: #A11D2A;
+        }
+        
+        .settings-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .mirrored {
+            transform: scaleX(-1);
+        }
+
+        .video-container {
+            position: relative; 
+            display: inline-block;
+            width: 100%;
+        }
+        
+        video, img {
+            width: 100%;
+            border-radius: 8px;
+            background: #000;
+            border: 2px solid #3a3c4a;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            transition: filter 0.3s ease; 
+        }
+        
+        #countdown {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%); 
+            font-size: 6rem;
+            font-weight: bold;
+            color: #E04F60; 
+            text-shadow: 0 0 25px rgba(224, 79, 96, 0.9); 
+            display: none; 
+            z-index: 10;
+        }
+        
+        .controls {
+            margin: 1rem 0;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .action-btn {
+            background: #A11D2A; 
+            color: #E4E5E8;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+        }
+        .action-btn:hover {
+            background: #E04F60; 
+            transform: translateY(-2px);
+        }
+        .action-btn:disabled {
+            background: #3a3c4a;
+            color: #9a9ca6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .back-btn {
+            background: transparent;
+            color: #9a9ca6;
+            border: 1px solid #9a9ca6;
+        }
+        .back-btn:hover {
+            background: rgba(154, 156, 166, 0.1);
+            color: #E4E5E8;
+        }
+        
+        a.download-btn {
+            display: none; 
+            margin-top: 10px;
+            color: #E4E5E8;
+            text-decoration: none;
+            font-weight: bold;
+            border: 1px solid #E04F60;
+            background: rgba(161, 29, 42, 0.2);
+            padding: 10px 20px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        a.download-btn:hover {
+            background: rgba(224, 79, 96, 0.4);
+        }
+        
+        canvas {
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="main-menu">
+        <h1>QuackSnap</h1>
+        <p>Ready to capture the moment?</p>
+        <button id="start-btn" class="menu-btn">Start Camera</button>
+    </div>
+
+    <div id="photobooth-app">   
+        
+        <div class="filter-controls"> 
+            <button class="filter-btn active" data-filter="none">Normal</button>
+            <button class="filter-btn" data-filter="grayscale(100%)">B&W</button>
+            <button class="filter-btn" data-filter="sepia(100%)">Sepia</button>
+            <button class="filter-btn" data-filter="contrast(150%) saturate(150%)">Vivid</button>
+        </div>
+        
+        <div class="settings-controls">
+            <button id="mirror-btn" class="filter-btn">🪞 Mirror: ON</button>
+            <button id="mode-btn" class="filter-btn">📸 Mode: Single</button>
+        </div>
+
+        <div class="video-container"> 
+            <video id="video" autoplay playsinline></video>
+            <div id="countdown">3</div>
+        </div>
+        
+        <div class="controls"> 
+            <button id="back-btn" class="action-btn back-btn">Quit</button>
+            <button id="snap" class="action-btn">Take Photo</button>
+        </div>
+
+        <canvas id="canvas"></canvas>
+        <img id="photo" alt="Your photo will appear here">
+        <br>
+        
+        <a id="download" class="download-btn">⬇️ Download Photo</a> 
+    </div>
+
+    <script>
+        const mainMenu = document.getElementById('main-menu');
+        const photoboothApp = document.getElementById('photobooth-app');
+        const startBtn = document.getElementById('start-btn');
+        const backBtn = document.getElementById('back-btn');
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const snapBtn = document.getElementById('snap');
+        const photo = document.getElementById('photo');
+        const downloadLink = document.getElementById('download');
+        const countdownDisplay = document.getElementById('countdown');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const mirrorBtn = document.getElementById('mirror-btn');
+        const modeBtn = document.getElementById('mode-btn');
+
+        let isMirrored = true; 
+        video.classList.add('mirrored'); 
+        let photoMode = 'single';
+        let stream = null; 
+        let currentFilter = 'none'; 
+
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                filterBtns.forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                currentFilter = e.target.getAttribute('data-filter');
+                video.style.filter = currentFilter;
+            });
+        });
+
+        mirrorBtn.addEventListener('click', () => {
+            isMirrored = !isMirrored; 
+            mirrorBtn.innerText = isMirrored ? "🪞 Mirror: ON" : "🪞 Mirror: OFF";
+            video.classList.toggle('mirrored', isMirrored); 
+        });
+
+        modeBtn.addEventListener('click', () => {
+            if (photoMode === 'single') {
+                photoMode = 'strip';
+                modeBtn.innerText = "🎞️ Mode: 4-Panel";
+            } else {
+                photoMode = 'single';
+                modeBtn.innerText = "📸 Mode: Single";
+            }
+        });
+
+        startBtn.addEventListener('click', () => {
+            mainMenu.style.display = 'none';
+            photoboothApp.style.display = 'block';
+            initCamera();
+        });
+
+        backBtn.addEventListener('click', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            photoboothApp.style.display = 'none';
+            mainMenu.style.display = 'block';
+            photo.src = '';
+            downloadLink.style.display = 'none';
+        });
+
+        async function initCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "user" }, 
+                    audio: false 
+                });
+                video.srcObject = stream; 
+            } catch (err) {
+                console.error("Error accessing camera: ", err);
+                alert("Could not access the camera. Please allow permissions.");
+            }
+        }
+
+        function takeSnapshot() {
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            context.save(); 
+            
+            if (isMirrored) {
+                context.translate(canvas.width, 0);
+                context.scale(-1, 1);
+            }
+            
+            context.filter = currentFilter;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            context.restore(); 
+            
+            const imageData = canvas.toDataURL('image/png');
+            photo.src = imageData; 
+            
+            downloadLink.href = imageData;
+            downloadLink.download = 'quacksnap.png';
+            downloadLink.style.display = 'inline-block'; 
+        }
+
+        snapBtn.addEventListener('click', () => {
+            snapBtn.disabled = true;
+            backBtn.disabled = true;
+            
+            let timeLeft = 3;
+            countdownDisplay.style.display = 'block'; 
+            countdownDisplay.innerText = timeLeft;
+
+            const timer = setInterval(() => {
+                timeLeft -= 1; 
+                
+                if (timeLeft > 0) {
+                    countdownDisplay.innerText = timeLeft; 
+                } else {
+                    clearInterval(timer); 
+                    countdownDisplay.style.display = 'none'; 
+                    takeSnapshot(); 
+                    
+                    snapBtn.disabled = false;
+                    backBtn.disabled = false;
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
