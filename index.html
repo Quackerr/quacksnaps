@@ -323,61 +323,94 @@
             }
         }
 
-        // --- 4G: IMAGE CAPTURE LOGIC ---
-        // Draws the current video frame onto the hidden canvas
-        function takeSnapshot() {
+        // --- 4G: IMAGE CAPTURE HELPER FUNCTIONS ---
+        // A custom function that tells the code to pause for a specific number of milliseconds
+        const delay = (ms) => new Promise(res => setTimeout(res, ms));
+
+        // Runs the 3-2-1 countdown animation
+        async function runCountdown() {
+            countdownDisplay.style.display = 'block';
+            for (let i = 3; i > 0; i--) {
+                countdownDisplay.innerText = i;
+                await delay(1000); // Wait exactly 1 second
+            }
+            countdownDisplay.style.display = 'none';
+        }
+
+        // Captures a single frame and draws it at a specific vertical (Y) position
+        function captureFrame(yOffset, width, height) {
             const context = canvas.getContext('2d');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            
             context.save(); 
             
-            // Flip the canvas horizontally if Mirror Mode is ON
             if (isMirrored) {
-                context.translate(canvas.width, 0);
+                context.translate(width, 0);
                 context.scale(-1, 1);
             }
             
-            // Apply the active CSS filter to the canvas context
             context.filter = currentFilter;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
+            context.drawImage(video, 0, yOffset, width, height);
             context.restore(); 
-            
-            // Export the final image to the screen
-            const imageData = canvas.toDataURL('image/png');
-            photo.src = imageData; 
-            
-            // Make the image downloadable
-            downloadLink.href = imageData;
-            downloadLink.download = 'quacksnap.png';
-            downloadLink.style.display = 'inline-block'; 
         }
 
-        // --- 4H: COUNTDOWN TIMER LOGIC ---
-        // Runs the 3-2-1 timer before firing the camera
-        snapBtn.addEventListener('click', () => {
+        // --- 4H: PHOTO BUTTON ROUTING (SINGLE VS 4-PANEL) ---
+        snapBtn.addEventListener('click', async () => {
+            // Lock the buttons so the user can't interrupt the sequence
             snapBtn.disabled = true;
             backBtn.disabled = true;
             
-            let timeLeft = 3;
-            countdownDisplay.style.display = 'block'; 
-            countdownDisplay.innerText = timeLeft;
+            const width = video.videoWidth;
+            const height = video.videoHeight;
 
-            const timer = setInterval(() => {
-                timeLeft -= 1; 
+            if (photoMode === 'single') {
+                // === SINGLE PHOTO MODE ===
+                canvas.width = width;
+                canvas.height = height;
                 
-                if (timeLeft > 0) {
-                    countdownDisplay.innerText = timeLeft; 
-                } else {
-                    clearInterval(timer); // Stop the countdown
-                    countdownDisplay.style.display = 'none'; 
-                    takeSnapshot(); 
+                await runCountdown();
+                captureFrame(0, width, height); // Draw at the very top (Y=0)
+                
+                // Export final single image
+                const imageData = canvas.toDataURL('image/png');
+                photo.src = imageData; 
+                downloadLink.href = imageData;
+                downloadLink.download = 'quacksnap-single.png';
+                downloadLink.style.display = 'inline-block';
+
+            } else if (photoMode === 'strip') {
+                // === 4-PANEL STRIP MODE ===
+                canvas.width = width;
+                canvas.height = height * 4; // Make the canvas 4 times taller!
+                
+                const context = canvas.getContext('2d');
+                context.fillStyle = '#050508'; // Paint the background Void Black
+                context.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Run a loop exactly 4 times
+                for (let i = 0; i < 4; i++) {
+                    await runCountdown(); 
                     
-                    snapBtn.disabled = false;
-                    backBtn.disabled = false;
+                    // Calculate where to drop the photo (0, 1x height, 2x height, or 3x height)
+                    const yPosition = i * height;
+                    captureFrame(yPosition, width, height);
+                    
+                    // Show a live preview of the strip building up!
+                    photo.src = canvas.toDataURL('image/png'); 
+                    
+                    // Give a 1-second breathing room before starting the next countdown
+                    if (i < 3) {
+                        await delay(1000); 
+                    }
                 }
-            }, 1000);
+                
+                // Export the final compiled strip
+                downloadLink.href = canvas.toDataURL('image/png');
+                downloadLink.download = 'quacksnap-strip.png';
+                downloadLink.style.display = 'inline-block';
+            }
+            
+            // Unlock the buttons when completely finished
+            snapBtn.disabled = false;
+            backBtn.disabled = false;
         });
     </script>
 </body>
