@@ -44,6 +44,35 @@
             margin-bottom: 2.5rem;
             font-size: 1.1rem;
         }
+
+        /* --- NEW MENU AESTHETICS --- */
+        .moon-title {
+            color: #E4E5E8;
+            font-size: 3rem; /* Slightly larger and more elegant */
+            margin: 0 0 0.5rem 0;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            text-shadow: 0 0 20px rgba(228, 229, 232, 0.3); /* Soft lunar glow */
+        }
+        
+        .welcome-text {
+            color: #b5b7c0; /* A warmer, brighter grey than before */
+            margin-bottom: 2.5rem;
+            font-size: 1.15rem;
+            line-height: 1.5;
+        }
+
+        /* The Breathing Glow Animation */
+        @keyframes bloodMoonPulse {
+            0% { box-shadow: 0 0 15px rgba(161, 29, 42, 0.4); }
+            50% { box-shadow: 0 0 30px rgba(224, 79, 96, 0.6); }
+            100% { box-shadow: 0 0 15px rgba(161, 29, 42, 0.4); }
+        }
+
+        .pulse-btn {
+            animation: bloodMoonPulse 3s infinite ease-in-out; /* Smooth continuous breathing */
+        }
+
         .menu-btn {
             background: #A11D2A; /* Blood Moon button */
             color: #E4E5E8;
@@ -191,14 +220,47 @@
         canvas {
             display: none;
         }
+
+        /* --- CUSTOM BLOOD MOON CURSOR --- */
+        /* 1. Hide the default mouse pointer everywhere */
+        body, button, a {
+            cursor: none !important;
+        }
+
+        /* 2. Style the custom glowing ring */
+        .custom-cursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #E04F60; /* Eclipse Glow */
+            border-radius: 50%;
+            pointer-events: none; /* Prevents the cursor from blocking your clicks */
+            transform: translate(-50%, -50%); /* Centers the ring exactly on the mouse coordinate */
+            transition: width 0.2s, height 0.2s, background-color 0.2s, box-shadow 0.2s;
+            z-index: 9999; /* Keeps it on top of everything */
+            box-shadow: 0 0 10px rgba(224, 79, 96, 0.4);
+        }
+
+        /* 3. The hover effect when mousing over buttons */
+        .custom-cursor.hovering {
+            width: 35px;
+            height: 35px;
+            background-color: rgba(161, 29, 42, 0.2); /* Blood Moon tint inside the ring */
+            box-shadow: 0 0 20px rgba(224, 79, 96, 0.8);
+        }
+
     </style>
 </head>
 <body>
 
+<div class="custom-cursor" id="custom-cursor"></div>
+
     <div id="main-menu">
-        <h1>QuackSnap</h1>
-        <p>Ready to capture the moment?</p>
-        <button id="start-btn" class="menu-btn">Start Camera</button>
+        <h1 class="moon-title">QuackSnap</h1>
+        <p class="welcome-text">The stage is set. Gather TNK dokyu, step into the light, and let's make some memories.</p>
+        <button id="start-btn" class="menu-btn pulse-btn">Awaken Camera</button>
     </div>
 
     <div id="photobooth-app">   
@@ -412,6 +474,27 @@
             snapBtn.disabled = false;
             backBtn.disabled = false;
         });
+        
+        // --- 4I: CUSTOM CURSOR LOGIC ---
+        const customCursor = document.getElementById('custom-cursor');
+
+        // Track the mouse movement and lock the ring to it
+        document.addEventListener('mousemove', (e) => {
+            customCursor.style.left = e.clientX + 'px';
+            customCursor.style.top = e.clientY + 'px';
+        });
+
+        // Add the glowing hover effect to all buttons and links
+        const clickableElements = document.querySelectorAll('button, a');
+        clickableElements.forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                customCursor.classList.add('hovering');
+            });
+            el.addEventListener('mouseleave', () => {
+                customCursor.classList.remove('hovering');
+            });
+        });
+
     </script>
 </body>
 </html>
