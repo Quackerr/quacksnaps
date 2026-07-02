@@ -6,10 +6,11 @@
     <title>QuackSnap Photobooth</title>
     
     <style>
+        /* --- 2A: GLOBAL SETUP --- */
         body {
             font-family: 'Segoe UI', system-ui, sans-serif;
-            background-color: #050508; 
-            color: #E4E5E8; 
+            background-color: #050508; /* Deep void background */
+            color: #E4E5E8; /* Full Moon text color */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -20,6 +21,7 @@
             box-sizing: border-box;
         }
 
+        /* --- 2B: MENU SCREEN STYLES --- */
         #main-menu {
             text-align: center;
             background: #252630; 
@@ -43,7 +45,7 @@
             font-size: 1.1rem;
         }
         .menu-btn {
-            background: #A11D2A; 
+            background: #A11D2A; /* Blood Moon button */
             color: #E4E5E8;
             border: none;
             padding: 15px 40px;
@@ -57,13 +59,14 @@
             width: 100%;
         }
         .menu-btn:hover {
-            background: #E04F60; 
+            background: #E04F60; /* Eclipse Glow on hover */
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(224, 79, 96, 0.4);
         }
 
+        /* --- 2C: MAIN APP LAYOUT --- */
         #photobooth-app {
-            display: none; 
+            display: none; /* Hidden until Start is clicked */
             background: #252630; 
             padding: 1.5rem;
             border-radius: 12px;
@@ -74,7 +77,8 @@
             max-width: 550px;
         }
         
-        .filter-controls {
+        /* --- 2D: FILTER & SETTINGS BUTTONS --- */
+        .filter-controls, .settings-controls {
             display: flex;
             justify-content: center;
             gap: 10px;
@@ -96,23 +100,17 @@
             border-color: #A11D2A;
         }
         
-        .settings-controls {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        
+        /* Utility class to flip the video horizontally */
         .mirrored {
             transform: scaleX(-1);
         }
 
+        /* --- 2E: VIDEO FEED & TIMER DISPLAY --- */
         .video-container {
             position: relative; 
             display: inline-block;
             width: 100%;
         }
-        
         video, img {
             width: 100%;
             border-radius: 8px;
@@ -122,7 +120,6 @@
             box-sizing: border-box;
             transition: filter 0.3s ease; 
         }
-        
         #countdown {
             position: absolute;
             top: 50%;
@@ -136,6 +133,7 @@
             z-index: 10;
         }
         
+        /* --- 2F: ACTION BUTTONS & DOWNLOAD LINK --- */
         .controls {
             margin: 1rem 0;
             display: flex;
@@ -173,7 +171,6 @@
             background: rgba(154, 156, 166, 0.1);
             color: #E4E5E8;
         }
-        
         a.download-btn {
             display: none; 
             margin-top: 10px;
@@ -190,10 +187,10 @@
             background: rgba(224, 79, 96, 0.4);
         }
         
+        /* The hidden workspace where the image is drawn */
         canvas {
             display: none;
         }
-
     </style>
 </head>
 <body>
@@ -229,33 +226,43 @@
         </div>
 
         <canvas id="canvas"></canvas>
+        
         <img id="photo" alt="Your photo will appear here">
         <br>
-        
         <a id="download" class="download-btn">⬇️ Download Photo</a> 
     </div>
 
     <script>
+        // --- 4A: DOM ELEMENT SELECTION ---
+        // Hooking into the HTML elements so JS can control them
         const mainMenu = document.getElementById('main-menu');
         const photoboothApp = document.getElementById('photobooth-app');
         const startBtn = document.getElementById('start-btn');
         const backBtn = document.getElementById('back-btn');
+        
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const snapBtn = document.getElementById('snap');
         const photo = document.getElementById('photo');
         const downloadLink = document.getElementById('download');
         const countdownDisplay = document.getElementById('countdown');
+        
         const filterBtns = document.querySelectorAll('.filter-btn');
         const mirrorBtn = document.getElementById('mirror-btn');
         const modeBtn = document.getElementById('mode-btn');
 
-        let isMirrored = true; 
-        video.classList.add('mirrored'); 
-        let photoMode = 'single';
+        // --- 4B: STATE VARIABLES ---
+        // Remembers the current settings while the app runs
         let stream = null; 
         let currentFilter = 'none'; 
+        let photoMode = 'single';
+        
+        // Mirror is ON by default for front-facing cameras
+        let isMirrored = true; 
+        video.classList.add('mirrored'); 
 
+        // --- 4C: FILTER LOGIC ---
+        // Applies CSS filters to the live video feed
         filterBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 filterBtns.forEach(b => b.classList.remove('active'));
@@ -265,6 +272,8 @@
             });
         });
 
+        // --- 4D: SETTINGS LOGIC ---
+        // Handles flipping the camera and switching capture modes
         mirrorBtn.addEventListener('click', () => {
             isMirrored = !isMirrored; 
             mirrorBtn.innerText = isMirrored ? "🪞 Mirror: ON" : "🪞 Mirror: OFF";
@@ -281,6 +290,8 @@
             }
         });
 
+        // --- 4E: NAVIGATION LOGIC ---
+        // Handles moving between the Start Menu and the App
         startBtn.addEventListener('click', () => {
             mainMenu.style.display = 'none';
             photoboothApp.style.display = 'block';
@@ -289,7 +300,7 @@
 
         backBtn.addEventListener('click', () => {
             if (stream) {
-                stream.getTracks().forEach(track => track.stop());
+                stream.getTracks().forEach(track => track.stop()); // Turn off hardware camera
             }
             photoboothApp.style.display = 'none';
             mainMenu.style.display = 'block';
@@ -297,6 +308,8 @@
             downloadLink.style.display = 'none';
         });
 
+        // --- 4F: CAMERA INITIALIZATION ---
+        // Requests permission and connects webcam to the video tag
         async function initCamera() {
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ 
@@ -310,6 +323,8 @@
             }
         }
 
+        // --- 4G: IMAGE CAPTURE LOGIC ---
+        // Draws the current video frame onto the hidden canvas
         function takeSnapshot() {
             const context = canvas.getContext('2d');
             canvas.width = video.videoWidth;
@@ -317,24 +332,30 @@
             
             context.save(); 
             
+            // Flip the canvas horizontally if Mirror Mode is ON
             if (isMirrored) {
                 context.translate(canvas.width, 0);
                 context.scale(-1, 1);
             }
             
+            // Apply the active CSS filter to the canvas context
             context.filter = currentFilter;
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             
             context.restore(); 
             
+            // Export the final image to the screen
             const imageData = canvas.toDataURL('image/png');
             photo.src = imageData; 
             
+            // Make the image downloadable
             downloadLink.href = imageData;
             downloadLink.download = 'quacksnap.png';
             downloadLink.style.display = 'inline-block'; 
         }
 
+        // --- 4H: COUNTDOWN TIMER LOGIC ---
+        // Runs the 3-2-1 timer before firing the camera
         snapBtn.addEventListener('click', () => {
             snapBtn.disabled = true;
             backBtn.disabled = true;
@@ -349,7 +370,7 @@
                 if (timeLeft > 0) {
                     countdownDisplay.innerText = timeLeft; 
                 } else {
-                    clearInterval(timer); 
+                    clearInterval(timer); // Stop the countdown
                     countdownDisplay.style.display = 'none'; 
                     takeSnapshot(); 
                     
